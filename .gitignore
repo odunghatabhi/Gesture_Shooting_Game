@@ -1,0 +1,6 @@
+venv
+drawing
+build/
+dist/
+*.spec
+build
