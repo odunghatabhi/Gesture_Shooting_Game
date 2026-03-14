@@ -43,18 +43,20 @@ def build_countdown_frame(width: int, height: int, detector: HandDetector, frame
 def build_game_over_frame(width: int, height: int, detector: HandDetector, frame, pointer, tap_ready, player_name: str, score: int):
     canvas = np.zeros((height, width, 3), dtype=np.uint8)
     detector.draw_cached_landmarks(canvas)
-    draw_panel(canvas, "Time Up", "Point to Exit and tap with your index finger to close the game.")
+    draw_panel(canvas, "Time Up", "Point to Retry to return to the menu, or point to Exit to close the game.")
     cv2.putText(canvas, f"Player: {player_name}", (330, 320), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
     cv2.putText(canvas, f"Final Score: {score}", (330, 400), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 255), 3)
 
-    exit_rect = (470, 500, 810, 590)
+    retry_rect = (280, 500, 600, 590)
+    exit_rect = (680, 500, 1000, 590)
+    draw_button(canvas, retry_rect, "Retry", active=pointer is not None and point_in_rect(pointer, retry_rect))
     draw_button(canvas, exit_rect, "Exit", active=pointer is not None and point_in_rect(pointer, exit_rect))
 
     if pointer is not None:
         color = (0, 255, 0) if tap_ready else (255, 255, 255)
         cv2.circle(canvas, pointer, 12, color, 2)
 
-    return canvas, exit_rect
+    return canvas, retry_rect, exit_rect
 
 
 def main():
@@ -136,11 +138,16 @@ def main():
 
         else:
             final_name = player_name if player_name else "Player"
-            canvas, exit_rect = build_game_over_frame(
+            canvas, retry_rect, exit_rect = build_game_over_frame(
                 width, height, detector, frame, pointer, tap_ready, final_name, game.score
             )
-            if tap_triggered and pointer is not None and point_in_rect(pointer, exit_rect):
-                break
+            if tap_triggered and pointer is not None:
+                if point_in_rect(pointer, retry_rect):
+                    game.reset()
+                    player_name = ""
+                    state = "menu"
+                elif point_in_rect(pointer, exit_rect):
+                    break
 
         cv2.imshow(WINDOW_NAME, canvas)
 
