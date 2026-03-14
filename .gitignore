@@ -1,6 +1,6 @@
 venv
-drawing
 build/
 dist/
-*.spec
 build
+.vscode
+*.spec
